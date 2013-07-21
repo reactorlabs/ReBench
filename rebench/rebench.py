@@ -31,7 +31,7 @@
 import sys
 
 from Executor import Executor
-from Reporter import FileReporter, Reporters, CliReporter, DiagramResultReporter, CodespeedReporter, CSVFileReporter
+from Reporter import FileReporter, Reporters, CliReporter, DiagramResultReporter, CodespeedReporter, CSVFileReporter, EmailReporter
 from Configurator import Configurator
 from DataAggregator import DataAggregator
 from optparse import OptionParser, OptionGroup
@@ -52,7 +52,7 @@ class ReBench:
 Argument:
   config    required argument, file containing the run definition to be executed
   run_name  optional argument, the name of a run definition
-            from the config file"""
+            from the config file. Use 'all' to execute all run definitions."""
         options = OptionParser(usage=usage, version="%prog " + self.version)
         
         options.add_option("-q", "--quick", action="store_true", dest="quick",
@@ -158,6 +158,8 @@ Argument:
                 reporters.append(CSVFileReporter(self.config))
             if 'csv_raw' in self.config.reporting:
                 data.setCsvRawFile(self.config.reporting['csv_raw'])
+            if 'email' in self.config.reporting:
+                reporters.append(EmailReporter(self.config.reporting['email']))
         
         # first load old data if available
         if self.config.options.clean:

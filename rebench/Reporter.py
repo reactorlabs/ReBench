@@ -387,6 +387,56 @@ class CSVFileReporter(Reporter):
     
     def startConfiguration(self, runId):
         pass
+            
+class EmailReporter(Reporter):
+    """ This reporter will send an email to the given address
+        after all benchmarks are executed.
+    """
+    
+    def __init__(self, email):
+        self._email = email
+    
+    def _send(self):
+        import smtplib
+        from email.mime.text import MIMEText
+        from subprocess import Popen, PIPE
+        
+        import socket
+        hostname = socket.gethostname()
+        import getpass
+        user = getpass.getuser()
+        sender_email = '%s@%s' % (user, hostname)
+        
+        msg = MIMEText("body of the message, to be done")
+        msg['Subject'] = '[rebench] Benchmarks done on %s' % hostname
+        msg['From']    = 'mail@stefan-marr.de' # sender_email
+        msg['To']      = 'mail@stefan-marr.de' # self._email
+
+        # s = smtplib.SMTP()
+        # s.sendmail(sender_email, [self._email], msg.as_string())
+        # s.quit()
+        print("-----#######")
+        print(msg.as_string())
+        print("-----#######")
+        p = Popen(["/usr/sbin/sendmail", "-t"], stdin=PIPE)
+        p.communicate(msg.as_string())
+        print("returncode: %s" % p.returncode)
+        
+    def runFailed(self, runId, cmdline, returncode, output):
+        pass
+    
+    def configurationCompleted(self, runId, statistics, cmdline):
+        pass
+    
+    def jobCompleted(self, configurations, dataAggregator):
+        self._send()
+        print("Sent Email to %s\n" % self._email)
+    
+    def setTotalNumberOfConfigurations(self, numConfigs):
+        pass
+    
+    def startConfiguration(self, runId):
+        pass
         
 
 class CodespeedReporter(Reporter):

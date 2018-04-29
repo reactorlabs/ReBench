@@ -17,7 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from __future__ import with_statement, print_function
+
 from collections import deque
 
 from datetime import datetime
@@ -76,7 +76,7 @@ class TextReporter(Reporter):
         if not statistics:
             return
         
-        for field, value in statistics.__dict__.iteritems():
+        for field, value in statistics.__dict__.items():
             if not field.startswith('_'):
                 output_list.append("%s: %s " % (field, value))
 
@@ -337,7 +337,7 @@ class CodespeedReporter(Reporter):
             self._send_and_empty_cache()
 
     def _send_and_empty_cache(self):
-        self._send_to_codespeed(self._cache.values())
+        self._send_to_codespeed(list(self._cache.values()))
         self._cache = {}
     
     def _result_data_template(self):

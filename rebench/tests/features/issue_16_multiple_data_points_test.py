@@ -41,6 +41,7 @@ class Issue16MultipleDataPointsTest(ReBenchTestCase):
         ex.execute()
         self.assertEqual(1, len(cnf.get_runs()))
         run = iter(cnf.get_runs()).next()
+        # run = next(iter(cnf.get_runs()))
         self.assertEqual(num_data_points, len(run.get_data_points()))
         return run.get_data_points()
 
@@ -52,7 +53,7 @@ class Issue16MultipleDataPointsTest(ReBenchTestCase):
 
     def test_associates_measurements_and_data_points_correctly(self):
         data_points = self._records_data_points('Test1', 10)
-        for dp, i in zip(data_points, range(0, 10)):
+        for dp, i in zip(data_points, list(range(0, 10))):
             self.assertEqual(4, dp.number_of_measurements())
 
             for criterion, measurement in zip(["bar", "baz", "foo", "total"],

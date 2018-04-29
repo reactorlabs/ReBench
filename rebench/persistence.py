@@ -38,7 +38,7 @@ class DataStore:
         self._bench_cfgs = {}
 
     def load_data(self):
-        for persistence in self._files.values():
+        for persistence in list(self._files.values()):
             persistence._load_data()
 
     def get(self, filename, discard_old_data):
@@ -100,7 +100,7 @@ class DataStore:
     @classmethod
     def discard_data_of_runs(cls, runs):
         by_file = cls.get_by_file(runs)
-        for filename, ms in by_file.iteritems():
+        for filename, ms in by_file.items():
             try:
                 with open(filename, 'r') as f:
                     lines = f.readlines()
@@ -111,7 +111,7 @@ class DataStore:
             for m in ms:
                 lines[m.line_number] = None
 
-            lines = filter(None, lines)
+            lines = [_f for _f in lines if _f]
 
             with open(filename, 'w') as f:
                 f.writelines(lines)

@@ -108,7 +108,7 @@ def can_set_niceness():
 
 def can_set_cpu_freq():
     try:
-        output = subprocess.check_output(["python", "rebench/power.py"],
+        output = subprocess.check_output(["python", "rebench/power.py", ["-l"]],
                                      stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         output = e.output
@@ -237,7 +237,7 @@ class Configurator(object):
                            + "{ind}CPU Frequency Scaling has not been deactivated.\n")
             self._options.use_cfs = True
 
-        if not self.deact_tb and not can_set_cpu_freq():
+        if not self.deact_tb and not can_write_no_turbo_config():
             self._ui.error("Error: TurboBoost could not be disabled. \n"
                            + "{ind}The only supported platform is Unix with sudo enabled.\n"
                            + "{ind}TurboBoost has not been deactivated.\n")

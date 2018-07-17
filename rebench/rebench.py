@@ -115,64 +115,78 @@ Argument:
             '-s', '--scheduler', action='store', dest='scheduler',
             default='batch',
             help='execution order of benchmarks: '
-                 'batch, round-robin, random [default: %(default)s]')
+                    'batch, round-robin, random [default: %(default)s]')
 
         data = parser.add_argument_group(
             'Data and Reporting',
             'Configure how recorded data is handled and reported')
         data.add_argument('-c', '--clean', action='store_true', dest='clean',
-                          default=False,
-                          help='Discard old data from the data file '
-                               '(configured in the experiment).')
+                            default=False,
+                            help='Discard old data from the data file '
+                                '(configured in the experiment).')
         data.add_argument('-r', '--rerun', action='store_true',
-                          dest='do_rerun', default=False,
-                          help='Rerun experiments, '
-                               'and discard old data from data file.')
+                            dest='do_rerun', default=False,
+                            help='Rerun experiments, '
+                                'and discard old data from data file.')
         data.add_argument('-f', '--faulty', action='store_true',
-                          dest='include_faulty', default=False,
-                          help='Include results of faulty or failing runs')
+                            dest='include_faulty', default=False,
+                            help='Include results of faulty or failing runs')
         data.add_argument('-df', '--data-file', dest='data_file', default=None,
-                          help='Record all data into given file. '
-                               'This overrides the configuration\'s settings.')
+                            help='Record all data into given file. '
+                                'This overrides the configuration\'s settings.')
         data.add_argument('-b', '--build-log', dest='build_log', default=None,
-                          help='File for the output of build commands.'
-                               'This overrides the configuration\'s setting.')
+                            help='File for the output of build commands.'
+                                'This overrides the configuration\'s setting.')
 
         codespeed = parser.add_argument_group(
             'Reporting to Codespeed',
             'Some of these parameters are mandatory for reporting to Codespeed')
         codespeed.add_argument('--commit-id', dest='commit_id', default=None,
-                               help='MANDATORY: when codespeed reporting is '
+                                help='MANDATORY: when codespeed reporting is '
                                     ' used, the commit-id has to be specified.')
         codespeed.add_argument('--environment', dest='environment',
-                               default=None,
-                               help='MANDATORY: name the machine on which the '
+                                default=None,
+                                help='MANDATORY: name the machine on which the '
                                     'results are obtained.')
         codespeed.add_argument('--branch', dest='branch',
-                               default='HEAD',
-                               help='The branch for which the results have to '
+                                default='HEAD',
+                                help='The branch for which the results have to '
                                     'be recorded, i.e., to which the commit'
                                     ' belongs. Default: HEAD')
         codespeed.add_argument('--executable', dest='executable',
-                               default=None,
-                               help='The executable name given to codespeed. '
+                                default=None,
+                                help='The executable name given to codespeed. '
                                     'Default: The name used for the virtual '
                                     'machine.')
         codespeed.add_argument('--project', dest='project',
-                               default=None,
-                               help='The project name given to codespeed. '
+                                default=None,
+                                help='The project name given to codespeed. '
                                     'Default: Value given in the config file.')
         codespeed.add_argument('-I', '--disable-inc-report',
-                               action='store_false', dest='report_incrementally',
-                               default=True, help='Does a final report at the '
-                                                  'end instead of reporting '
-                                                  'incrementally.')
+                                action='store_false', dest='report_incrementally',
+                                default=True, help='Does a final report at the '
+                                                    'end instead of reporting '
+                                                    'incrementally.')
         codespeed.add_argument('-S', '--disable-codespeed',
-                               action='store_false', dest='use_codespeed',
-                               default=True,
-                               help='Override configuration and '
+                                action='store_false', dest='use_codespeed',
+                                default=True,
+                                help='Override configuration and '
                                     'disable reporting to codespeed.')
 
+        # now here some low level configurations for production accurracy benchmarking
+        lowlevel = parser.add_argument_group(
+            'Minimizing OS and Hardware noise in benchmarks',
+            'Options for disabling processor power management'
+                                'and disabling OS daemons')
+        
+        lowlevel.add_argument("-F", "--disable-CPUFreqScaling",
+                                action="store_false", dest="deact_cfs",
+                                default=True, help="Disable CPU Frequency Scaling")
+
+        lowlevel.add_argument("-T", "--disable-turboBoost",
+                                action="store_false", dest="deact_tb",
+                                default=True, help="Disable Processor's Turbo Boost")
+                                    
         return parser
 
     @staticmethod
@@ -227,6 +241,7 @@ Argument:
                             self._config.options.debug,
                             scheduler_class,
                             self._config.build_log)
+        
         return executor.execute()
 
 

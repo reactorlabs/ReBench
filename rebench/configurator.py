@@ -106,6 +106,28 @@ def can_set_niceness():
     else:
         return True
 
+def can_set_cpu_freq():
+    try:
+        output = subprocess.check_output(["python", "rebench/power.py"],
+                                     stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        output = e.output
+    
+    if type(output) != str:  # pylint: disable=unidiomatic-typecheck
+        output = output.decode('utf-8')
+    if "IOError" in output:
+        return False
+    
+    return True
+
+def can_write_no_turbo_config():
+    try:
+        f = open('/sys/devices/system/cpu/intel_pstate/no_turbo', "a")
+        f.close()
+    except OSError:
+        return False
+
+    return True
 
 def load_config(file_name):
     """
@@ -200,16 +222,38 @@ class Configurator(object):
 
         self._ui.init(self._options.verbose, self._options.debug)
 
-        if self._options.use_nice and not can_set_niceness():
+        if self.use_nice and not can_set_niceness():
             self._ui.error("Error: Process niceness can not be set.\n"
                            + "{ind}To execute benchmarks with highest priority,\n"
                            + "{ind}you might need root/admin rights.\n"
                            + "{ind}Deactivated usage of nice command.\n")
             self._options.use_nice = False
 
+        if not self.deact_cfs and not can_set_cpu_freq():
+            self._ui.error("Error: Frequency Scaling is only supported"
+                           + "with the acpi-cpufreq driver.\n"
+                           + "{ind}Add 'intel_pstate=disable' to kernel boot parameters "
+                           + "if you want to use it.\n"
+                           + "{ind}CPU Frequency Scaling has not been deactivated.\n")
+            self._options.use_cfs = True
+
+        if not self.deact_tb and not can_set_cpu_freq():
+            self._ui.error("Error: TurboBoost could not be disabled. \n"
+                           + "{ind}The only supported platform is Unix with sudo enabled.\n"
+                           + "{ind}TurboBoost has not been deactivated.\n")
+            self._options.use_tb = True
+
     @property
     def use_nice(self):
         return self._options is not None and self._options.use_nice
+
+    @property
+    def deact_cfs(self):
+        return self._options is not None and self._options.deact_cfs
+
+    @property
+    def deact_tb(self):
+        return self._options is not None and self._options.deact_tb
 
     @property
     def do_builds(self):

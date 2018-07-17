@@ -1,0 +1,3 @@
+[submodule "external/PowerManagement"]
+	path = external/PowerManagement
+	url = git@github.com:charig/CommsPowerManagement.git

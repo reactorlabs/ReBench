@@ -195,6 +195,10 @@ schema;vm_type:
       type: str
       required: yes
       desc: the name of the binary to be used
+    environment:
+      type: str
+      required: no
+      desc: configuration of environment variables for the current run
     args:
       type: str
       # default: '' # causes issue in pykwalify

@@ -238,8 +238,12 @@ class RunId(object):
             return self._cmdline
 
         cmdline = ""
+
+        if self._benchmark.suite.vm.environment:
+            cmdline = "%s " % (self._benchmark.suite.vm.environment, )
+
         if self._benchmark.suite.vm.path:
-            cmdline = "%s/" % (self._benchmark.suite.vm.path, )
+            cmdline += "%s/" % (self._benchmark.suite.vm.path, )
 
         cmdline += "%s %s" % (self._benchmark.suite.vm.binary,
                               self._benchmark.suite.vm.args or '')
@@ -250,7 +254,6 @@ class RunId(object):
             cmdline += " %s" % self._benchmark.extra_args
 
         cmdline = self._expand_vars(cmdline)
-
         self._cmdline = cmdline.strip()
         return self._cmdline
 

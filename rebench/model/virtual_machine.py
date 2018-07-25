@@ -33,6 +33,7 @@ class VirtualMachine(object):
             path = os.path.abspath(path)
         binary = vm.get('binary')
         args = vm.get('args')
+        environment = vm.get('environment')
 
         build = BuildCommand.create_commands(vm.get('build'), build_commands, path)
 
@@ -42,10 +43,10 @@ class VirtualMachine(object):
         run_details = ExpRunDetails.compile(vm, run_details)
         variables = ExpVariables.compile(vm, variables)
 
-        return VirtualMachine(vm_name, path, binary, args, build, description or desc,
+        return VirtualMachine(vm_name, path, binary, args, environment, build, description or desc,
                               run_details, variables)
 
-    def __init__(self, name, path, binary, args, build, description,
+    def __init__(self, name, path, binary, args, environment, build, description,
                  run_details, variables):
         """Specializing the VM details in the run definitions with the settings from
            the VM definitions
@@ -55,6 +56,7 @@ class VirtualMachine(object):
         self._path = path
         self._binary = binary
         self._args = args
+        self._environment = environment
 
         self._build = build
         self._description = description
@@ -77,6 +79,10 @@ class VirtualMachine(object):
     @property
     def args(self):
         return self._args
+
+    @property
+    def environment(self):
+        return self._environment
 
     @property
     def build(self):

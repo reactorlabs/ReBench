@@ -239,9 +239,6 @@ class RunId(object):
 
         cmdline = ""
 
-        if self._benchmark.suite.vm.environment:
-            cmdline = "%s " % (self._benchmark.suite.vm.environment, )
-
         if self._benchmark.suite.vm.path:
             cmdline += "%s/" % (self._benchmark.suite.vm.path, )
 
@@ -255,6 +252,7 @@ class RunId(object):
 
         cmdline = self._expand_vars(cmdline)
         self._cmdline = cmdline.strip()
+        
         return self._cmdline
 
     def __eq__(self, other):

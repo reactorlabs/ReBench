@@ -35,11 +35,10 @@ from humanfriendly.compat import coerce_string
 
 from . import subprocess_with_timeout as subprocess_timeout
 from .interop.adapter import ExecutionDeliveredNoResults
-from .statistics import StatisticProperties, mean
 
 
 class FailedBuilding(Exception):
-    """The exception to be raised when building of the VM or suite failed."""
+    """The exception to be raised when building of the executor or suite failed."""
     def __init__(self, name, build_command):
         super(FailedBuilding, self).__init__()
         self._name = name
@@ -83,20 +82,21 @@ class RunScheduler(object):
         if not self._ui.spinner_initialized():
             return
 
-        totals = run.get_total_values()
         if completed_task:
             self._runs_completed += 1
 
-        if totals:
-            art_mean = mean(run.get_total_values())
-        else:
-            art_mean = 0
+        art_mean = run.get_mean_of_totals()
 
         hour, minute, sec = self._estimate_time_left()
 
         label = "Running Benchmarks: %70s\tmean: %10.1f\ttime left: %02d:%02d:%02d" \
                 % (run.as_simple_string(), art_mean, hour, minute, sec)
         self._ui.step_spinner(self._runs_completed, label)
+
+    def indicate_build(self, run_id):
+        run_id_names = run_id.as_str_list()
+        self._ui.step_spinner(
+            self._runs_completed, "Run build for %s %s" % (run_id_names[1], run_id_names[2]))
 
     def execute(self):
         self._total_num_runs = len(self._executor.runs)
@@ -309,9 +309,9 @@ class Executor(object):
         decoded = data.decode('utf-8')
         return coerce_string(decoded)
 
-    def _build_vm_and_suite(self, run_id):
-        name = "VM:" + run_id.benchmark.suite.vm.name
-        build = run_id.benchmark.suite.vm.build
+    def _build_executor_and_suite(self, run_id):
+        name = "E:" + run_id.benchmark.suite.executor.name
+        build = run_id.benchmark.suite.executor.build
         self._process_builds(build, name, run_id)
 
         name = "S:" + run_id.benchmark.suite.name
@@ -338,16 +338,32 @@ class Executor(object):
 
         script = build_command.command
 
+        self._scheduler.indicate_build(run_id)
         self._ui.debug_output_info("Start build\n", None, script, path)
 
         def _keep_alive(seconds):
             self._ui.warning(
-                "Keep alive. current job runs since %dmin" % (seconds / 60), run_id, script, path)
+                "Keep alive. current job runs since %dmin\n" % (seconds / 60), run_id, script, path)
 
-        return_code, stdout_result, stderr_result = subprocess_timeout.run(
-            '/bin/sh', path, False, True,
-            stdin_input=str.encode(script),
-            keep_alive_output=_keep_alive)
+        try:
+            return_code, stdout_result, stderr_result = subprocess_timeout.run(
+                '/bin/sh', path, False, True,
+                stdin_input=str.encode(script),
+                keep_alive_output=_keep_alive)
+        except OSError as err:
+            build_command.mark_failed()
+            run_id.fail_immediately()
+            run_id.report_run_failed(
+                script, err.errno, "Build of " + name + " failed.")
+
+            if err.errno == 2:
+                msg = ("{ind}Build of %s failed.\n"
+                       + "{ind}{ind}It failed with: %s.\n"
+                       + "{ind}{ind}File name: %s\n") % (name, err.strerror, err.filename)
+            else:
+                msg = str(err)
+            self._ui.error(msg, run_id, script, path)
+            return
 
         stdout_result = coerce_string(stdout_result.decode('utf-8'))
         stderr_result = coerce_string(stderr_result.decode('utf-8'))
@@ -394,22 +410,22 @@ class Executor(object):
 
         terminate = self._check_termination_condition(run_id, termination_check)
         if not terminate and self._do_builds:
-            self._build_vm_and_suite(run_id)
+            self._build_executor_and_suite(run_id)
 
         # now start the actual execution
         if not terminate:
             terminate = self._generate_data_point(cmdline, gauge_adapter,
                                                   run_id, termination_check)
 
-        stats = StatisticProperties(run_id.get_total_values())
+        mean_of_totals = run_id.get_mean_of_totals()
         if terminate:
-            run_id.report_run_completed(stats, cmdline)
+            run_id.report_run_completed(cmdline)
             if (not run_id.is_failed() and run_id.min_iteration_time
-                    and stats.mean < run_id.min_iteration_time):
+                    and mean_of_totals < run_id.min_iteration_time):
                 self._ui.warning(
                     ("{ind}Warning: Low mean run time.\n"
                      + "{ind}{ind}The mean (%.1f) is lower than min_iteration_time (%d)\n")
-                    % (stats.mean, run_id.min_iteration_time), run_id, cmdline)
+                    % (mean_of_totals, run_id.min_iteration_time), run_id, cmdline)
 
         return terminate
 
@@ -440,7 +456,7 @@ class Executor(object):
 
             def _keep_alive(seconds):
                 self._ui.warning(
-                    "Keep alive. current job runs since %dmin" % (seconds / 60), run_id, cmdline)
+                    "Keep alive. current job runs since %dmin\n" % (seconds / 60), run_id, cmdline)
 
             (return_code, output, _) = subprocess_timeout.run(
                 cmdline, cwd=run_id.location, stdout=subprocess.PIPE,
@@ -466,7 +482,7 @@ class Executor(object):
                 msg = ("{ind}Error: Could not execute %s.\n"
                        + "{ind}{ind}The file may not be marked as executable.\n"
                        + "{ind}Return code: %d\n") % (
-                           run_id.benchmark.suite.vm.name, return_code)
+                           run_id.benchmark.suite.executor.name, return_code)
             elif return_code == -9:
                 msg = ("{ind}Run timed out.\n"
                        + "{ind}{ind}Return code: %d\n"

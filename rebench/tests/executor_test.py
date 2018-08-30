@@ -21,6 +21,7 @@ import unittest
 import subprocess
 import os
 
+from .persistence import TestPersistence
 from .rebench_test_case import ReBenchTestCase
 from ..rebench           import ReBench
 from ..executor          import Executor
@@ -54,19 +55,6 @@ class ExecutorTest(ReBenchTestCase):
         finally:
             subprocess.Popen = old_popen
 
-# TODO: should test more details
-#        (mean, sdev, (interval, interval_percentage),
-#                (interval_t, interval_percentage_t)) = ex.result['test-vm']['test-bench']
-#
-#        self.assertEqual(31, len(ex.benchmark_data['test-vm']['test-bench']))
-#        self.assertAlmostEqual(45870.4193548, mean)
-#        self.assertAlmostEqual(2.93778711485, sdev)
-#
-#        (i_low, i_high) = interval
-#        self.assertAlmostEqual(45869.385195243565, i_low)
-#        self.assertAlmostEqual(45871.453514433859, i_high)
-#        self.assertAlmostEqual(0.00450904792104, interval_percentage)
-
     def test_broken_command_format_with_ValueError(self):
         with self.assertRaises(UIError) as err:
             options = ReBench().shell_options().parse_args(['dummy'])
@@ -92,10 +80,16 @@ class ExecutorTest(ReBenchTestCase):
     def _basic_execution(self, cnf):
         runs = cnf.get_runs()
         self.assertEqual(8, len(runs))
-        ex = Executor(cnf.get_runs(), cnf.use_nice, cnf.do_builds, TestDummyUI())
+
+        runs = cnf.get_runs()
+        persistence = TestPersistence()
+        for run in runs:
+            run.add_persistence(persistence)
+
+        ex = Executor(runs, cnf.use_nice, cnf.do_builds, TestDummyUI())
         ex.execute()
         for run in runs:
-            data_points = run.get_data_points()
+            data_points = persistence.get_data_points(run)
             self.assertEqual(10, len(data_points))
             for data_point in data_points:
                 measurements = data_point.get_measurements()
@@ -162,10 +156,10 @@ class ExecutorTest(ReBenchTestCase):
         args = option_parser.parse_args(['-d', '-v', 'some.conf', 'exp_name'])
         self.assertEqual(args.exp_filter, ['exp_name'])
 
-    def test_shell_options_with_vm_filter(self):
+    def test_shell_options_with_executor_filter(self):
         option_parser = ReBench().shell_options()
-        args = option_parser.parse_args(['-d', '-v', 'some.conf', 'vm:foo'])
-        self.assertEqual(args.exp_filter, ['vm:foo'])
+        args = option_parser.parse_args(['-d', '-v', 'some.conf', 'e:foo'])
+        self.assertEqual(args.exp_filter, ['e:foo'])
 
     def test_determine_exp_name_and_filters_empty(self):
         empty = []
@@ -186,16 +180,16 @@ class ExecutorTest(ReBenchTestCase):
         self.assertEqual(exp_filter, [])
 
     def test_determine_exp_name_and_filters_all_and_other(self):
-        filters = ['all', 'vm:bar', 's:b']
+        filters = ['all', 'e:bar', 's:b']
         exp_name, exp_filter = ReBench.determine_exp_name_and_filters(filters)
         self.assertEqual(exp_name, "all")
-        self.assertEqual(exp_filter, ['vm:bar', 's:b'])
+        self.assertEqual(exp_filter, ['e:bar', 's:b'])
 
     def test_determine_exp_name_and_filters_only_others(self):
-        filters = ['vm:bar', 's:b']
+        filters = ['e:bar', 's:b']
         exp_name, exp_filter = ReBench.determine_exp_name_and_filters(filters)
         self.assertEqual(exp_name, "all")
-        self.assertEqual(exp_filter, ['vm:bar', 's:b'])
+        self.assertEqual(exp_filter, ['e:bar', 's:b'])
 
 
 def Popen_override(cmdline, stdout, stdin=None, stderr=None, cwd=None, shell=None):  # pylint: disable=unused-argument

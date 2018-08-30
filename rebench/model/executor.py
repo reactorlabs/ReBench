@@ -33,7 +33,7 @@ class Executor(object):
             path = os.path.abspath(path)
         executable = executor.get('executable')
         args = executor.get('args')
-        environment = vm.get('environment')
+        environment = executor.get('environment')
 
         build = BuildCommand.create_commands(executor.get('build'), build_commands, path)
 
@@ -46,7 +46,7 @@ class Executor(object):
         return Executor(executor_name, path, executable, args, environment, build, description or desc,
                         run_details, variables)
 
-    def __init__(self, name, path, executable, args, build, description,
+    def __init__(self, name, path, executable, args, environment, build, description,
                  run_details, variables):
         """Specializing the executor details in the run definitions with the settings from
            the executor definitions

@@ -31,14 +31,9 @@ class Executor(object):
         path = executor.get('path')
         if path:
             path = os.path.abspath(path)
-<<<<<<< HEAD:rebench/model/virtual_machine.py
-        binary = vm.get('binary')
-        args = vm.get('args')
-        environment = vm.get('environment')
-=======
         executable = executor.get('executable')
         args = executor.get('args')
->>>>>>> df668b68cd576bb9d6636af0f478f311cb9a101d:rebench/model/executor.py
+        environment = vm.get('environment')
 
         build = BuildCommand.create_commands(executor.get('build'), build_commands, path)
 
@@ -48,17 +43,10 @@ class Executor(object):
         run_details = ExpRunDetails.compile(executor, run_details)
         variables = ExpVariables.compile(executor, variables)
 
-<<<<<<< HEAD:rebench/model/virtual_machine.py
-        return VirtualMachine(vm_name, path, binary, args, environment, build, description or desc,
-                              run_details, variables)
-
-    def __init__(self, name, path, binary, args, environment, build, description,
-=======
-        return Executor(executor_name, path, executable, args, build, description or desc,
+        return Executor(executor_name, path, executable, args, environment, build, description or desc,
                         run_details, variables)
 
     def __init__(self, name, path, executable, args, build, description,
->>>>>>> df668b68cd576bb9d6636af0f478f311cb9a101d:rebench/model/executor.py
                  run_details, variables):
         """Specializing the executor details in the run definitions with the settings from
            the executor definitions

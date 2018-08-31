@@ -264,7 +264,7 @@ class RunId(object):
 
     def __eq__(self, other):
         return (isinstance(other, self.__class__) and
-                self.cmdline() == other.cmdline() and (self._benchmark.suite.vm.environment == other._benchmark.suite.vm.environment))
+                self.cmdline() == other.cmdline() and (self._benchmark.suite.executor.environment == other._benchmark.suite.executor.environment))
 
     def __ne__(self, other):
         return not self.__eq__(other)

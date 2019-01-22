@@ -20,6 +20,7 @@
 from __future__ import with_statement
 
 from time import time
+from operator import itemgetter
 import json
 import re
 
@@ -34,8 +35,6 @@ except ImportError:
     from httplib import HTTPException
     from urllib import urlencode # pylint: disable=ungrouped-imports
     from urllib2 import urlopen
-
-from .statistics import StatisticProperties
 
 
 class Reporter(object):
@@ -79,16 +78,17 @@ class TextReporter(Reporter):
         rows = []
 
         for run_id in run_ids:
-            stats = StatisticProperties(run_id.get_total_values())
+            mean = run_id.get_mean_of_totals()
+            num_samples = run_id.get_number_of_data_points()
             out = run_id.as_str_list()
-            out.append(stats.num_samples)
-            if stats.num_samples == 0:
+            out.append(num_samples)
+            if num_samples == 0:
                 out.append("Failed")
             else:
-                out.append(int(round(stats.mean, 0)))
+                out.append(int(round(mean, 0)))
             rows.append(out)
 
-        return rows
+        return sorted(rows, key=itemgetter(2, 1, 3, 4, 5, 6, 7))
 
 
 class CliReporter(TextReporter):
@@ -113,7 +113,8 @@ class CliReporter(TextReporter):
     def report_job_completed(self, run_ids):
         self._ui.output("\n\n" + format_pretty_table(
             self._generate_all_output(run_ids),
-            ['Benchmark', 'VM', 'Suite', 'Extra', 'Core', 'Size', 'Var', '#Samples', 'Mean (ms)'],
+            ['Benchmark', 'Executor', 'Suite', 'Extra', 'Core', 'Size', 'Var',
+             '#Samples', 'Mean (ms)'],
             vertical_bar=' '))
 
     def set_total_number_of_runs(self, num_runs):
@@ -190,7 +191,7 @@ class CodespeedReporter(Reporter):
         else:
             result['result_value'] = -1
 
-        result['executable'] = self._cfg.executable or run_id.benchmark.suite.vm.name
+        result['executable'] = self._cfg.executable or run_id.benchmark.suite.executor.name
 
         if run_id.benchmark.codespeed_name:
             name = run_id.benchmark.codespeed_name
@@ -246,8 +247,7 @@ class CodespeedReporter(Reporter):
                     + "{ind}{ind}" + msg + "\n", run_id)
 
     def _prepare_result(self, run_id):
-        stats = StatisticProperties(run_id.get_total_values())
-        return self._format_for_codespeed(run_id, stats)
+        return self._format_for_codespeed(run_id, run_id.get_statistics())
 
     def report_job_completed(self, run_ids):
         if self._incremental_report:

@@ -293,8 +293,8 @@ class Executor(object):
     def _construct_cmdline(self, run_id, gauge_adapter):
         cmdline = ""
 
-        if run_id.benchmark.suite.vm.environment:
-            cmdline = "%s " % (run_id.benchmark.suite.vm.environment, )
+        if run_id.benchmark.suite.executor.environment:
+            cmdline = "%s " % (run_id.benchmark.suite.executor.environment, )
         
         if self._use_nice:
             cmdline += "nice -n-20 "

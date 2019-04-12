@@ -46,7 +46,10 @@ class RunId(object):
 
     @property
     def warmup_iterations(self):
-        return self._benchmark.run_details.warmup
+        run_details = self._benchmark.run_details
+        if run_details.warmup_override is not None:
+            return run_details.warmup_override
+        return run_details.warmup
 
     @property
     def min_iteration_time(self):

@@ -100,6 +100,10 @@ Argument:
             help='The number of times a benchmark is to be executed within an executor invocation.',
             default=None, type=int)
         execution.add_argument(
+            '-wu', '--warmup', action='store', dest='warmup',
+            help='The number of times a benchmark is to be executed within an executor invocation but its results ignored.',
+            default=None, type=int)
+        execution.add_argument(
             '-q', '--quick', action='store_true', dest='quick',
             help='Execute quickly. Identical with --iterations=1 --invocations=1',
             default=False)

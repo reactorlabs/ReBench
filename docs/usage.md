@@ -92,6 +92,12 @@ We can override this setting with the following parameters:
                  The number of times a benchmark is to be executed
                  within an executor execution.
 
+-wu WARMUP, --warmup WARMUP
+                 The number of times a benchmark is to be executed
+                 within an executor execution but its execution times 
+                 not considered for the overall results.
+
+
 -q, --quick      Execute quickly. Identical with --iterations=1 --invocations=1
 ```
 

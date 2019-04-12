@@ -106,6 +106,10 @@ def can_set_niceness():
     else:
         return True
 
+#Support for yaml concatenation 
+def join(loader, node):
+    seq = loader.construct_sequence(node)
+    return ''.join([str(i) for i in seq])
 
 def load_config(file_name):
     """
@@ -120,10 +124,10 @@ def load_config(file_name):
     import logging
     logging.getLogger('pykwalify').setLevel(logging.CRITICAL)
     logging.getLogger('pykwalify').addHandler(logging.NullHandler())
-
     try:
         with open(file_name, 'r') as conf_file:
-            data = yaml.safe_load(conf_file)
+            yaml.add_constructor('!join', join)
+            data = yaml.load(conf_file)
             validator = Core(
                 source_data=data,
                 schema_files=[dirname(__file__) + "/rebench-schema.yml"])
@@ -160,13 +164,15 @@ class Configurator(object):
         # capture invocation and iteration settings and override when quick is selected
         invocations = cli_options.invocations if cli_options else None
         iterations = cli_options.iterations if cli_options else None
+        warmup = cli_options.warmup if cli_options else None
         if cli_options and cli_options.quick:
             invocations = 1
             iterations = 1
+            warmup = 0
 
         self._root_run_details = ExpRunDetails.compile(
             raw_config.get('runs', {}), ExpRunDetails.default(
-                invocations, iterations))
+                invocations, iterations, warmup))
         self._root_reporting = Reporting.compile(
             raw_config.get('reporting', {}), Reporting.empty(cli_reporter), cli_options, ui)
 

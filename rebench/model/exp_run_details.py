@@ -40,20 +40,20 @@ class ExpRunDetails(object):
 
         return ExpRunDetails(invocations, iterations, warmup, min_iteration_time,
                              max_invocation_time, parallel_interference_factor, execute_exclusively,
-                             defaults.invocations_override, defaults.iterations_override)
+                             defaults.invocations_override, defaults.iterations_override, defaults.warmup_override)
 
     @classmethod
     def empty(cls):
-        return ExpRunDetails(None, None, None, None, None, None, None, None, None)
+        return ExpRunDetails(None, None, None, None, None, None, None, None, None, None)
 
     @classmethod
-    def default(cls, invocations_override, iterations_override):
+    def default(cls, invocations_override, iterations_override, warmup_override):
         return ExpRunDetails(1, 1, None, 50, -1, None, True,
-                             invocations_override, iterations_override)
+                             invocations_override, iterations_override, warmup_override)
 
     def __init__(self, invocations, iterations, warmup, min_iteration_time,
                  max_invocation_time, parallel_interference_factor, execute_exclusively,
-                 invocations_override, iterations_override):
+                 invocations_override, iterations_override, warmup_override):
         self._invocations = invocations
         self._iterations = iterations
         self._warmup = warmup
@@ -65,6 +65,7 @@ class ExpRunDetails(object):
 
         self._invocations_override = invocations_override
         self._iterations_override = iterations_override
+        self._warmup_override = warmup_override
 
     @property
     def invocations(self):
@@ -75,6 +76,10 @@ class ExpRunDetails(object):
         return self._iterations
 
     @property
+    def warmup(self):
+        return self._warmup
+
+    @property
     def invocations_override(self):
         return self._invocations_override
 
@@ -83,8 +88,8 @@ class ExpRunDetails(object):
         return self._iterations_override
 
     @property
-    def warmup(self):
-        return self._warmup
+    def warmup_override(self):
+        return self._warmup_override
 
     @property
     def min_iteration_time(self):

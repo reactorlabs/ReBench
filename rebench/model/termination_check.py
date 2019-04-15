@@ -39,7 +39,8 @@ class TerminationCheck(object):
 
     def fails_consecutively(self):
         return (self._fail_immediately or
-                self._consecutive_erroneous_executions >= 3)
+                (self._consecutive_erroneous_executions > 0 and
+                 self._consecutive_erroneous_executions >= self._run_id.retries_after_failure))
 
     def has_too_many_failures(self, number_of_data_points):
         return (self._fail_immediately or
@@ -51,8 +52,11 @@ class TerminationCheck(object):
         if self._fail_immediately:
             self._ui.warning("{ind}Marked to fail immediately.\n", self._run_id)
         if self.fails_consecutively():
-            self._ui.warning(
-                "{ind}Three executions have failed in a row, benchmark is aborted.\n", self._run_id)
+            msg = "{ind}Execution has failed, benchmark is aborted.\n"
+            if self._consecutive_erroneous_executions > 0:
+                msg += "{ind}{ind}The benchmark failed "
+                msg += str(self._consecutive_erroneous_executions) + " times in a row."
+            self._ui.warning(msg, self._run_id)
             return True
         elif self.has_too_many_failures(number_of_data_points):
             self._ui.warning(

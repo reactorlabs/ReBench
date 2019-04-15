@@ -126,8 +126,8 @@ def load_config(file_name):
     logging.getLogger('pykwalify').addHandler(logging.NullHandler())
     try:
         with open(file_name, 'r') as conf_file:
-            yaml.add_constructor('!join', join)
-            data = yaml.load(conf_file)
+            yaml.add_constructor('!join', join, yaml.SafeLoader)
+            data = yaml.load(conf_file, yaml.SafeLoader)
             validator = Core(
                 source_data=data,
                 schema_files=[dirname(__file__) + "/rebench-schema.yml"])

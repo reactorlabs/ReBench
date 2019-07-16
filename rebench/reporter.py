@@ -188,8 +188,6 @@ class CodespeedReporter(Reporter):
             result['max'] = stats.max
             result['std_dev'] = stats.std_dev
             result['result_value'] = stats.mean
-        else:
-            result['result_value'] = -1
 
         result['executable'] = self._cfg.executable or run_id.benchmark.suite.executor.name
 
